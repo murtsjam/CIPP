@@ -1,5 +1,5 @@
-import { Layout as DashboardLayout } from "/src/layouts/index.js";
-import { CippTablePage } from "/src/components/CippComponents/CippTablePage.jsx";
+import { Layout as DashboardLayout } from "../../../layouts/index.js";
+import { CippTablePage } from "../../../components/CippComponents/CippTablePage.jsx";
 import { Button } from "@mui/material";
 import {
   Add,
@@ -8,10 +8,11 @@ import {
   PersonRemove,
   AdminPanelSettings,
   NoAccounts,
+  Delete,
 } from "@mui/icons-material";
 import Link from "next/link";
-import { CippDataTable } from "/src/components/CippTable/CippDataTable";
-import { useSettings } from "/src/hooks/use-settings";
+import { CippDataTable } from "../../../components/CippTable/CippDataTable";
+import { useSettings } from "../../../hooks/use-settings";
 
 const Page = () => {
   const pageTitle = "SharePoint Sites";
@@ -176,6 +177,18 @@ const Page = () => {
       ],
       multiPost: false,
     },
+    {
+      label: "Delete Site",
+      type: "POST",
+      icon: <Delete />,
+      url: "/api/DeleteSharepointSite",
+      data: {
+        SiteId: "siteId",
+      },
+      confirmText: "Are you sure you want to delete this SharePoint site? This action cannot be undone.",
+      color: "error",
+      multiPost: false,
+    },
   ];
 
   const offCanvas = {
@@ -186,11 +199,9 @@ const Page = () => {
         title="Site Members"
         queryKey={`site-members-${row.siteId}`}
         api={{
-          url: "/api/ListGraphRequest",
+          url: "/api/ListSiteMembers",
           data: {
-            Endpoint: `/sites/${row.siteId}/lists/User%20Information%20List/items`,
-            AsApp: "true",
-            expand: "fields",
+            SiteId: row.siteId,
             tenantFilter: tenantFilter,
           },
           dataKey: "Results",
