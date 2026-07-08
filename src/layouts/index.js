@@ -27,13 +27,17 @@ import { CippImageCard } from '../components/CippCards/CippImageCard'
 import { useDialog } from '../hooks/use-dialog'
 import { nativeMenuItems } from './config'
 import { CippBreadcrumbNav } from '../components/CippComponents/CippBreadcrumbNav'
+import { SsoMigrationDialog } from '../components/CippComponents/SsoMigrationDialog'
+import { ForcedSsoMigrationDialog } from '../components/CippComponents/ForcedSsoMigrationDialog'
+import { SubscriptionEndedDialog } from '../components/CippComponents/SubscriptionEndedDialog'
+import { FailedPaymentDialog } from '../components/CippComponents/FailedPaymentDialog'
 
 const OnboardingWizardPage = dynamic(
   () => import('../components/CippWizard/OnboardingWizardPage.jsx'),
   { ssr: false }
 )
 
-const SIDE_NAV_WIDTH = 270
+const SIDE_NAV_WIDTH = 290
 const SIDE_NAV_PINNED_WIDTH = 50
 const TOP_NAV_HEIGHT = 50
 
@@ -109,7 +113,7 @@ export const Layout = (props) => {
   const currentRole = ApiGetCall({
     url: '/api/me',
     queryKey: 'authmecipp',
-    waiting: !swaStatus.isSuccess || swaStatus.data?.clientPrincipal === null,
+    waiting: swaStatus.isSuccess && swaStatus.data?.clientPrincipal !== null,
   })
 
   const featureFlags = ApiGetCall({
@@ -176,6 +180,7 @@ export const Layout = (props) => {
             // check sub-items
             if (item.items && item.items.length > 0) {
               const filteredSubItems = filterItemsByRole(item.items).filter(Boolean)
+              if (filteredSubItems.length === 0) return null
               return { ...item, items: filteredSubItems }
             }
 
@@ -258,7 +263,7 @@ export const Layout = (props) => {
   })
 
   const alertsAPI = ApiGetCall({
-    url: `/api/GetCippAlerts?localversion=${version?.data?.version}`,
+    url: `/api/GetCippAlerts?localversion=${encodeURIComponent(version?.data?.version)}`,
     queryKey: 'alertsDashboard',
     waiting: false,
     refetchOnMount: false,
@@ -335,6 +340,10 @@ export const Layout = (props) => {
               <OnboardingWizardPage />
             </DialogContent>
           </Dialog>
+          <SubscriptionEndedDialog hostedSubscriptionEnded={currentRole.data?.hostedSubscriptionEnded} />
+          <FailedPaymentDialog hostedFailedPayments={currentRole.data?.hostedFailedPayments} />
+          <SsoMigrationDialog meData={currentRole.data} />
+          <ForcedSsoMigrationDialog />
           {!setupCompleted && (
             <Box sx={{ flexGrow: 1, py: 2 }}>
               <Container maxWidth={false}>

@@ -67,10 +67,13 @@ const MODE_CONFIG = {
   "Tooltip": "Confidential data, do not share externally",
   "Comment": "Internal-only confidential classification",
   "ContentType": "File, Email",
+  "ApplyContentMarkingHeaderEnabled": true,
+  "ApplyContentMarkingHeaderText": "Confidential - Internal Use Only",
+  "ApplyContentMarkingHeaderFontColor": "#FF0000",
   "EncryptionEnabled": true,
-  "EncryptionProtectionType": "Template",
-  "ContentMarkingHeaderEnabled": true,
-  "ContentMarkingHeaderText": "Confidential - Internal Use Only",
+  "EncryptionProtectionType": "UserDefined",
+  "EncryptionPromptUser": true,
+  "EncryptionDoNotForward": true,
   "PolicyParams": {
     "Name": "Confidential Label Policy",
     "ExchangeLocation": "All",
@@ -88,18 +91,21 @@ const MODE_CONFIG = {
     listTemplatesUrl: "/api/ListSensitiveInfoTypeTemplates",
     templateQueryKey: "TemplateListSensitiveInfoType",
     relatedQueryKeys: ["ListSensitiveInfoType", "ListSensitiveInfoTypeTemplates"],
-    placeholder: `{
-  "Name": "Custom Employee ID",
-  "Description": "Internal Employee ID format EMP-NNNNN",
+    placeholder: `// Simple mode — backend wraps the regex in a rule pack for you
+{
+  "Name": "Acme Employee ID",
+  "Description": "Matches Acme employee IDs in the format EMP-NNNNN",
   "Pattern": "EMP-\\\\d{5}",
-  "Confidence": "High",
-  "Recommended": true
+  "Confidence": 85,
+  "PatternsProximity": 300,
+  "PublisherName": "Acme Corp"
 }
 
-// Or with a base64-encoded XML rule pack:
+// Advanced mode — provide your own rule pack XML, base64-encoded
 // {
-//   "Name": "Custom Rule Pack",
-//   "FileDataBase64": "<BASE64 encoded XML rule pack>"
+//   "Name": "Acme Custom Rule Pack",
+//   "Description": "Multi-pattern rule pack",
+//   "FileDataBase64": "<base64 of the rule pack XML>"
 // }`,
   },
 };

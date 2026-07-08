@@ -24,6 +24,7 @@ import { CippApiDialog } from '../CippComponents/CippApiDialog'
 import { getCippError } from '../../utils/get-cipp-error'
 import { Box } from '@mui/system'
 import { useSettings } from '../../hooks/use-settings'
+import { parseCippDate } from '../../utils/parse-cipp-date'
 import { isEqual } from 'lodash' // Import lodash for deep comparison
 import { useLicenseBackfill } from '../../hooks/use-license-backfill'
 
@@ -84,8 +85,8 @@ const SORTING_FNS = {
   dateTimeNullsLast: (a, b, id) => {
     const aRaw = getRowValueByColumnId(a, id)
     const bRaw = getRowValueByColumnId(b, id)
-    const aDate = aRaw ? new Date(aRaw) : null
-    const bDate = bRaw ? new Date(bRaw) : null
+    const aDate = aRaw ? parseCippDate(aRaw) : null
+    const bDate = bRaw ? parseCippDate(bRaw) : null
     const aTime = aDate && !Number.isNaN(aDate.getTime()) ? aDate.getTime() : null
     const bTime = bDate && !Number.isNaN(bDate.getTime()) ? bDate.getTime() : null
 
@@ -341,6 +342,7 @@ export const CippDataTable = (props) => {
     },
     exportEnabled = true,
     simpleColumns = [],
+    dataFilter,
     actions,
     title = 'Report',
     simple = false,
@@ -476,7 +478,7 @@ export const CippDataTable = (props) => {
         const nestedData = getNestedValue(page, api.dataKey)
         return nestedData !== undefined ? nestedData : []
       })
-      setUsedData(combinedResults)
+      setUsedData(dataFilter ? combinedResults.filter(dataFilter) : combinedResults)
     }
   }, [
     getRequestData.isSuccess,
@@ -579,6 +581,9 @@ export const CippDataTable = (props) => {
   }, [columns.length, usedData, queryKey, settings?.currentTenant, filterTypeMap])
 
   const createDialog = useDialog()
+  const hasActions = !!actions
+  const hasOffCanvas = !!offCanvas
+  const hasOnChange = !!onChange
 
   // Compute modeInfo via useMemo so it stays stable but updates when relevant inputs change.
   const modeInfo = useMemo(
@@ -593,11 +598,16 @@ export const CippDataTable = (props) => {
         maxHeightOffset,
         settings
       ),
-    [simple, !!actions, !!offCanvas, !!onChange, maxHeightOffset, settings?.tablePageSize?.value]
+    [simple, hasActions, hasOffCanvas, hasOnChange, maxHeightOffset, settings?.tablePageSize?.value]
   )
 
-  // Include updateTrigger in data memo to force re-render when license backfill completes
-  const memoizedData = useMemo(() => usedData, [usedData, updateTrigger])
+  // Include updateTrigger in data memo to force re-render when license backfill completes.
+  // Also refresh data identity when derived columns change so TanStack re-runs filtering
+  // for searches entered before columns are available.
+  const memoizedData = useMemo(
+    () => (Array.isArray(usedData) ? usedData.slice() : usedData),
+    [usedData, updateTrigger, usedColumns]
+  )
 
   // Sanitize columnVisibility to remove any undefined/invalid keys before passing to MRT
   const sanitizedColumnVisibility = useMemo(() => {
@@ -651,7 +661,15 @@ export const CippDataTable = (props) => {
   const muiTableBodyRowProps = useMemo(() => {
     if (offCanvasOnRowClick && offCanvas) {
       return ({ row }) => ({
-        onClick: () => {
+        onClick: (event) => {
+          if (
+            event.target?.closest?.(
+              'button, a, input, textarea, select, [role="button"], [role="menuitem"], [data-no-row-click="true"]'
+            )
+          ) {
+            return
+          }
+
           setOffCanvasData(row.original)
           const filteredRowsArray = table?.getFilteredRowModel?.()?.rows
           if (filteredRowsArray) {
