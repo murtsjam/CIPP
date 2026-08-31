@@ -217,7 +217,17 @@ export const AuthMethodCard = ({ data, isLoading }) => {
     <Card sx={{ flex: 1, height: "100%" }}>
       <CardHeader
         title={
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Box
+            onClick={() => router.push("/identity/reports/mfa-report")}
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+              cursor: "pointer",
+              width: "fit-content",
+              "&:hover": { textDecoration: "underline" },
+            }}
+          >
             <UsersIcon sx={{ fontSize: 24 }} />
             <Typography variant="h6">All users auth methods</Typography>
           </Box>
@@ -225,7 +235,7 @@ export const AuthMethodCard = ({ data, isLoading }) => {
         sx={{ pb: 1 }}
       />
       <CardContent sx={{ pb: 0 }}>
-        <Box sx={{ height: 300 }}>
+        <Box sx={{ height: { xs: 360, md: 300 } }}>
           {isLoading ? (
             <Skeleton variant="rectangular" width="100%" height={300} />
           ) : processedData ? (
